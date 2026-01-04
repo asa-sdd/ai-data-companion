@@ -8,8 +8,6 @@ const corsHeaders = {
 };
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 // System prompt for the AI
 const SYSTEM_PROMPT = `أنت مساعد قاعدة بيانات ذكي يتحدث العربية. مهمتك هي:
@@ -133,42 +131,77 @@ async function executeTool(supabase: any, toolName: string, args: any): Promise<
 
   switch (toolName) {
     case "list_tables": {
-      const { data, error } = await supabase
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
-        .neq('table_name', 'schema_migrations');
-      
-      if (error) {
-        // Fallback: query using RPC or direct query
-        const { data: tables, error: err2 } = await supabase.rpc('get_tables');
-        if (err2) {
-          return { success: false, error: "لا يمكن الوصول إلى قائمة الجداول. قد تحتاج إلى إنشاء جداول أولاً." };
+      // Try to get tables by querying a known system approach
+      // Since we can't query information_schema directly, we'll try a different approach
+      try {
+        const { data, error } = await supabase
+          .from('pg_tables')
+          .select('tablename')
+          .eq('schemaname', 'public');
+        
+        if (!error && data) {
+          return { success: true, tables: data.map((t: any) => t.tablename) };
         }
-        return { success: true, tables };
+      } catch (e) {
+        console.log('pg_tables approach failed, trying RPC');
       }
-      return { success: true, tables: data?.map((t: any) => t.table_name) || [] };
+
+      // Try RPC approach
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_public_tables');
+        if (!rpcError && rpcData) {
+          return { success: true, tables: rpcData };
+        }
+      } catch (e) {
+        console.log('RPC approach failed');
+      }
+
+      return { 
+        success: false, 
+        error: "لا يمكن الوصول إلى قائمة الجداول. تأكد من صحة بيانات الاتصال وأن لديك صلاحيات كافية.",
+        hint: "جرب أن تسألني عن جدول محدد إذا كنت تعرف اسمه"
+      };
     }
 
     case "describe_table": {
       const tableName = args.table_name;
-      const { data, error } = await supabase
+      
+      // Try to get a sample to understand the structure
+      const { data: sample, error } = await supabase
         .from(tableName)
         .select('*')
-        .limit(0);
+        .limit(1);
       
       if (error) {
-        return { success: false, error: `الجدول "${tableName}" غير موجود أو لا يمكن الوصول إليه` };
+        return { success: false, error: `الجدول "${tableName}" غير موجود أو لا يمكن الوصول إليه: ${error.message}` };
       }
       
-      // Get column info from a sample query
-      const { data: sample } = await supabase.from(tableName).select('*').limit(1);
-      const columns = sample && sample.length > 0 ? Object.keys(sample[0]) : [];
+      const columns = sample && sample.length > 0 
+        ? Object.entries(sample[0]).map(([name, value]) => ({ 
+            name, 
+            type: value === null ? 'unknown' : typeof value,
+            sample: value
+          }))
+        : [];
+      
+      // If no data, try to get just the structure
+      if (columns.length === 0) {
+        const { error: structError } = await supabase.from(tableName).select('*').limit(0);
+        if (structError) {
+          return { success: false, error: `الجدول "${tableName}" غير موجود` };
+        }
+        return { 
+          success: true, 
+          table_name: tableName,
+          columns: [],
+          message: "الجدول موجود لكنه فارغ"
+        };
+      }
       
       return { 
         success: true, 
         table_name: tableName,
-        columns: columns.map(col => ({ name: col, type: typeof (sample?.[0]?.[col] ?? 'string') }))
+        columns
       };
     }
 
@@ -205,10 +238,10 @@ async function executeTool(supabase: any, toolName: string, args: any): Promise<
     }
 
     case "update_data": {
-      // Parse where clause - simple id-based for safety
-      const match = args.where_clause.match(/id\s*=\s*['"]?(\w+)['"]?/i);
+      // Parse where clause - support id-based updates
+      const match = args.where_clause.match(/id\s*=\s*['"]?([^'"]+)['"]?/i);
       if (!match) {
-        return { success: false, error: "يجب تحديد id للتعديل" };
+        return { success: false, error: "يجب تحديد id للتعديل. مثال: id = 1" };
       }
       
       const { data, error } = await supabase
@@ -224,10 +257,10 @@ async function executeTool(supabase: any, toolName: string, args: any): Promise<
     }
 
     case "delete_data": {
-      // Parse where clause - simple id-based for safety
-      const match = args.where_clause.match(/id\s*=\s*['"]?(\w+)['"]?/i);
+      // Parse where clause - support id-based deletes
+      const match = args.where_clause.match(/id\s*=\s*['"]?([^'"]+)['"]?/i);
       if (!match) {
-        return { success: false, error: "يجب تحديد id للحذف" };
+        return { success: false, error: "يجب تحديد id للحذف. مثال: id = 1" };
       }
       
       const { data, error } = await supabase
@@ -254,14 +287,51 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, conversationHistory = [] } = await req.json();
+    const { messages, conversationHistory = [], supabaseUrl, supabaseKey } = await req.json();
 
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Create Supabase client with service role for database operations
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    // Validate user-provided Supabase credentials
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(JSON.stringify({ 
+        error: 'missing_credentials',
+        response: 'يرجى توفير بيانات اتصال Supabase (URL و Anon Key) أولاً'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate URL format
+    if (!supabaseUrl.includes('supabase.co') && !supabaseUrl.includes('supabase.in')) {
+      return new Response(JSON.stringify({ 
+        error: 'invalid_url',
+        response: 'عنوان Supabase غير صالح. يجب أن يكون بالشكل: https://xxxxx.supabase.co'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Creating Supabase client for user database:', supabaseUrl);
+
+    // Create Supabase client with user's credentials
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Test connection by trying a simple query
+    const { error: testError } = await supabase.from('_test_connection_').select('*').limit(1);
+    // We expect this to fail (table doesn't exist), but if it's an auth error, that's different
+    if (testError && testError.message.includes('Invalid API key')) {
+      return new Response(JSON.stringify({ 
+        error: 'invalid_key',
+        response: 'مفتاح API غير صالح. تأكد من استخدام Anon Key الصحيح.'
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Build conversation
     const allMessages = [
@@ -290,6 +360,17 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI API error:', errorText);
+      
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ 
+          error: 'rate_limit',
+          response: 'تم تجاوز حد الطلبات. يرجى المحاولة بعد قليل.'
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       throw new Error(`AI API error: ${response.status}`);
     }
 

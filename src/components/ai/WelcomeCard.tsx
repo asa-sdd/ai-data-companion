@@ -1,4 +1,4 @@
-import { Database, MessageSquare, Sparkles, Table } from "lucide-react";
+import { Database, MessageSquare, Sparkles, Table, Link } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const examples = [
@@ -16,17 +16,36 @@ const examples = [
   },
   {
     icon: Sparkles,
-    text: "عدل سعر المنتج رقم 5 إلى 75",
+    text: "أرني آخر 10 سجلات من جدول المستخدمين",
   },
 ];
 
 interface WelcomeCardProps {
   onExampleClick: (text: string) => void;
+  isConnected: boolean;
 }
 
-export function WelcomeCard({ onExampleClick }: WelcomeCardProps) {
+export function WelcomeCard({ onExampleClick, isConnected }: WelcomeCardProps) {
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] p-6 animate-fade-in">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-accent mb-6 shadow-lg">
+            <Link className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-3">
+            اتصل بقاعدة بياناتك أولاً
+          </h1>
+          <p className="text-muted-foreground max-w-md">
+            أدخل بيانات مشروع Supabase الخاص بك في النموذج أعلاه للبدء
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 animate-fade-in">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 animate-fade-in">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-accent mb-6 shadow-lg">
           <Database className="w-10 h-10 text-white" />
