@@ -109,58 +109,68 @@ async function executeToolCall(
   try {
     switch (toolName) {
       case "list_tables": {
-        const { data, error } = await userSupabase.rpc("get_tables_info").maybeSingle();
+        console.log("Listing tables using OpenAPI schema...");
         
-        // If RPC doesn't exist, fallback to information_schema
-        if (error) {
-          console.log("RPC not found, using direct query approach");
+        // Use OpenAPI endpoint to get available tables
+        const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+          method: 'GET',
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+        });
+        
+        if (response.ok) {
+          const openApiSpec = await response.json();
+          const paths = openApiSpec.paths || {};
+          const tables: string[] = [];
           
-          // Try to get tables from information_schema via REST
-          const { data: tables, error: tablesError } = await userSupabase
-            .from("information_schema.tables" as any)
-            .select("table_name, table_type")
-            .eq("table_schema", "public");
-          
-          if (tablesError) {
-            // Fallback: try to list what we can access
-            console.log("Fallback: listing accessible tables");
-            
-            // Execute raw SQL to get table info
-            const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_tables_info`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`,
-              },
-              body: JSON.stringify({}),
-            });
-            
-            if (!response.ok) {
-              // Try alternative approach - use pg_catalog
-              const sqlQuery = `
-                SELECT 
-                  table_name,
-                  (SELECT count(*) FROM information_schema.columns WHERE table_name = t.table_name AND table_schema = 'public') as column_count
-                FROM information_schema.tables t
-                WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-                ORDER BY table_name
-              `;
-              
-              return JSON.stringify({
-                message: "لا يمكن الوصول لمعلومات الجداول مباشرة. جرب إنشاء جدول جديد أو استخدام execute_sql للاستعلام.",
-                hint: "يمكنك استخدام: execute_sql مع استعلام SELECT * FROM information_schema.tables WHERE table_schema = 'public'"
-              });
+          for (const path of Object.keys(paths)) {
+            // Extract table names from paths like "/table_name"
+            if (path.startsWith('/') && !path.includes('{')) {
+              const tableName = path.slice(1);
+              if (tableName && tableName !== 'rpc') {
+                tables.push(tableName);
+              }
             }
-            
-            const result = await response.json();
-            return JSON.stringify(result);
           }
           
-          return JSON.stringify(tables || []);
+          if (tables.length > 0) {
+            return JSON.stringify({
+              success: true,
+              tables: tables,
+              count: tables.length,
+              message: `تم العثور على ${tables.length} جدول`
+            });
+          }
         }
         
-        return JSON.stringify(data || []);
+        // Fallback: Try to check for common table patterns
+        console.log("OpenAPI failed, trying common tables check...");
+        
+        const commonTables = ['users', 'profiles', 'posts', 'comments', 'products', 'orders', 'categories'];
+        const existingTables: string[] = [];
+        
+        for (const table of commonTables) {
+          const { error } = await userSupabase.from(table).select('*').limit(0);
+          if (!error) {
+            existingTables.push(table);
+          }
+        }
+        
+        if (existingTables.length > 0) {
+          return JSON.stringify({
+            success: true,
+            tables: existingTables,
+            note: "هذه الجداول التي تم اكتشافها. قد توجد جداول أخرى."
+          });
+        }
+        
+        return JSON.stringify({
+          success: false,
+          message: "لم يتم العثور على جداول في قاعدة البيانات. قد تكون فارغة أو الصلاحيات محدودة.",
+          hint: "يمكنك إنشاء جدول جديد باستخدام execute_sql"
+        });
       }
 
       case "describe_table": {
