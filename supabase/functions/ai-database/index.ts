@@ -472,15 +472,15 @@ serve(async (req) => {
 
     console.log("Calling Lovable AI Gateway...");
 
-    // Call Lovable AI Gateway
-    let response = await fetch("https://ai.lovable.dev/api/v3/chat", {
+    // Call Lovable AI Gateway with correct URL
+    let response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       },
       body: JSON.stringify({
-        model: "openai/gpt-5-mini",
+        model: "google/gemini-2.5-flash",
         messages: allMessages,
         tools,
         tool_choice: "auto",
@@ -525,14 +525,14 @@ serve(async (req) => {
       allMessages.push(assistantMessage);
       allMessages.push(...toolResults);
 
-      response = await fetch("https://ai.lovable.dev/api/v3/chat", {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
         },
         body: JSON.stringify({
-          model: "openai/gpt-5-mini",
+          model: "google/gemini-2.5-flash",
           messages: allMessages,
           tools,
           tool_choice: "auto",
