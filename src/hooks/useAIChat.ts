@@ -159,11 +159,16 @@ export function useAIChat() {
     setMessages([]);
   }, []);
 
+  const loadMessages = useCallback((newMessages: Message[]) => {
+    setMessages(newMessages);
+  }, []);
+
   return {
     messages,
     isLoading,
     sendMessage,
     clearMessages,
+    loadMessages,
     connection,
     isConnecting,
     connect,

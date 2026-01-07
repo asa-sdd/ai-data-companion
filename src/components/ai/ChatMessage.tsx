@@ -2,6 +2,7 @@ import { Bot, User, Table2, CheckCircle2, XCircle, AlertCircle, Copy, Check } fr
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ExportButtons } from "./ExportButtons";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
@@ -257,35 +258,42 @@ function ResultCard({ data }: { data: any }) {
   );
 }
 
-function DataTable({ data }: { data: any[] }) {
+function DataTable({ data, showExport = true }: { data: any[]; showExport?: boolean }) {
   if (!data.length) return null;
   
   const columns = Object.keys(data[0]);
   
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-background">
-      <table className="w-full text-sm" dir="ltr">
-        <thead className="bg-muted/50">
-          <tr>
-            {columns.map((col) => (
-              <th key={col} className="px-3 py-2.5 text-start font-semibold text-xs uppercase tracking-wide text-muted-foreground">
-                {col}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className="hover:bg-muted/30 transition-colors">
+    <div className="space-y-2">
+      {showExport && (
+        <div className="flex justify-end">
+          <ExportButtons data={data} />
+        </div>
+      )}
+      <div className="overflow-x-auto rounded-lg border border-border bg-background">
+        <table className="w-full text-sm" dir="ltr">
+          <thead className="bg-muted/50">
+            <tr>
               {columns.map((col) => (
-                <td key={col} className="px-3 py-2 text-foreground">
-                  <CellValue value={row[col]} />
-                </td>
+                <th key={col} className="px-3 py-2.5 text-start font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+                  {col}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {data.map((row, rowIndex) => (
+              <tr key={rowIndex} className="hover:bg-muted/30 transition-colors">
+                {columns.map((col) => (
+                  <td key={col} className="px-3 py-2 text-foreground">
+                    <CellValue value={row[col]} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

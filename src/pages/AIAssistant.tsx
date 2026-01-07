@@ -1,13 +1,15 @@
-import { useRef, useEffect } from "react";
-import { Trash2, Settings2 } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { Trash2, Settings2, Save, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ChatMessage } from "@/components/ai/ChatMessage";
 import { ChatInput } from "@/components/ai/ChatInput";
 import { WelcomeCard } from "@/components/ai/WelcomeCard";
 import { ConnectionForm } from "@/components/ai/ConnectionForm";
-import { useAIChat } from "@/hooks/useAIChat";
+import { SavedConversations, saveConversation } from "@/components/ai/SavedConversations";
+import { useAIChat, Message } from "@/hooks/useAIChat";
+import { toast } from "sonner";
 
 export default function AIAssistant() {
   const { 
@@ -15,6 +17,7 @@ export default function AIAssistant() {
     isLoading, 
     sendMessage, 
     clearMessages,
+    loadMessages,
     connection,
     isConnecting,
     connect,
@@ -22,6 +25,7 @@ export default function AIAssistant() {
   } = useAIChat();
   
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -31,6 +35,23 @@ export default function AIAssistant() {
   }, [messages, isLoading]);
 
   const isConnected = !!connection;
+
+  const handleSaveConversation = () => {
+    if (messages.length === 0) {
+      toast.error("لا توجد رسائل للحفظ");
+      return;
+    }
+    const saved = saveConversation(messages);
+    if (saved) {
+      toast.success("تم حفظ المحادثة");
+    }
+  };
+
+  const handleLoadConversation = (loadedMessages: Message[]) => {
+    loadMessages(loadedMessages);
+    setHistoryOpen(false);
+    toast.success("تم تحميل المحادثة");
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -62,16 +83,52 @@ export default function AIAssistant() {
           </div>
 
           <div className="flex items-center gap-2">
-            {messages.length > 0 && isConnected && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearMessages}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="w-4 h-4 ml-2" />
-                مسح
-              </Button>
+            {isConnected && (
+              <>
+                {messages.length > 0 && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSaveConversation}
+                      className="text-muted-foreground hover:text-primary"
+                    >
+                      <Save className="w-4 h-4 ml-2" />
+                      حفظ
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearMessages}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 ml-2" />
+                      مسح
+                    </Button>
+                  </>
+                )}
+                
+                <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <History className="w-4 h-4 ml-2" />
+                      السجل
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                    <SheetHeader>
+                      <SheetTitle>المحادثات المحفوظة</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <SavedConversations
+                        onLoad={handleLoadConversation}
+                        currentMessages={messages}
+                        onSave={handleSaveConversation}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </>
             )}
             
             <Sheet>
