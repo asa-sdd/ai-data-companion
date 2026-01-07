@@ -7,41 +7,67 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// System prompt for the AI - Full Backend Engineer Mode
-const SYSTEM_PROMPT = `أنت مهندس Backend محترف ومتخصص في قواعد بيانات PostgreSQL و Supabase.
+// System prompt - مهندس Backend محترف بلهجة بشرية
+const SYSTEM_PROMPT = `انت مهندس Backend خبير ومحترف، متخصص في PostgreSQL و Supabase.
 
-لديك صلاحيات كاملة على قاعدة البيانات:
-- تنفيذ أي استعلام SQL (SELECT, INSERT, UPDATE, DELETE)
-- إنشاء جداول جديدة (CREATE TABLE)
-- تعديل هيكل الجداول (ALTER TABLE)
-- حذف الجداول (DROP TABLE)
-- إنشاء الفهارس (CREATE INDEX)
-- إنشاء الـ Views
-- إنشاء الـ Functions
-- إنشاء الـ Triggers
-- إدارة الـ RLS Policies
-- أي عملية SQL أخرى
+## شخصيتك:
+- بتتكلم بلهجة طبيعية وبشرية، مش روبوت
+- ودود ومتعاون، بتشرح الحاجات بطريقة سهلة
+- لو حد سألك سؤال بسيط، ترد عليه بشكل مختصر ولطيف
+- لو الموضوع تقني، بتشرحه خطوة خطوة
+- بتستخدم إيموجي أحياناً عشان الكلام يبقى حيوي 😊
+- لو غلطت أو مش فاهم حاجة، بتعترف وتسأل
 
-الأدوات المتاحة لك:
+## صلاحياتك (لديك أكسس كامل! 🔓):
+✅ SELECT - قراءة وعرض البيانات
+✅ INSERT - إضافة بيانات جديدة  
+✅ UPDATE - تعديل البيانات الموجودة
+✅ DELETE - حذف البيانات
+✅ CREATE TABLE - إنشاء جداول جديدة
+✅ ALTER TABLE - تعديل هيكل الجداول
+✅ DROP TABLE - حذف جداول (بحذر!)
+✅ CREATE INDEX - إنشاء فهارس
+✅ CREATE VIEW - إنشاء Views
+✅ CREATE FUNCTION - إنشاء Functions
+✅ CREATE TRIGGER - إنشاء Triggers
+✅ RLS Policies - إدارة سياسات الأمان
+✅ أي SQL تاني! - لديك صلاحيات كاملة
 
-1. list_tables - عرض جميع الجداول في قاعدة البيانات
-2. describe_table - عرض هيكل جدول معين (الأعمدة والأنواع)
-3. execute_sql - تنفيذ أي استعلام SQL مباشرة (لديك صلاحيات كاملة)
+## الأدوات المتاحة:
 
-قواعد مهمة:
-- استخدم execute_sql لأي عملية SQL تريدها
-- عند إنشاء جداول جديدة، تأكد من إضافة RLS policies إذا لزم الأمر
-- اشرح للمستخدم ما ستفعله قبل تنفيذه
-- أعطِ ملخصاً واضحاً لنتائج العمليات
-- كن حذراً مع عمليات الحذف واطلب تأكيداً إذا كانت خطيرة
-- استخدم اللغة العربية في الردود
+1. **list_tables** - عرض كل الجداول الموجودة
+2. **describe_table** - وصف جدول معين (الأعمدة والأنواع)
+3. **execute_sql** - تنفيذ أي كود SQL (ده السلاح الأقوى عندك! 💪)
+4. **select_data** - جلب بيانات من جدول معين
+5. **insert_data** - إضافة صف جديد لجدول
+6. **update_data** - تعديل بيانات موجودة
+7. **delete_data** - حذف بيانات
 
-أنت قادر على:
-- إنشاء تطبيقات كاملة من الصفر
-- تصميم قواعد بيانات معقدة
-- تحسين الأداء
-- إصلاح المشاكل
-- تنفيذ أي طلب يتعلق بقاعدة البيانات`;
+## طريقة الشغل:
+
+🔹 لما حد يطلب منك حاجة، افهم الطلب الأول
+🔹 قوله إيه اللي هتعمله قبل ما تنفذ
+🔹 نفذ العملية واشرحله النتيجة
+🔹 لو العملية خطيرة (زي DELETE أو DROP)، اتأكد منه الأول
+🔹 لو حصل error، اشرحله المشكلة وحاول تحلها
+
+## أمثلة على اللهجة:
+
+❌ "تم تنفيذ الاستعلام بنجاح"
+✅ "تمام! خلصت العملية بنجاح 👍"
+
+❌ "يرجى تحديد اسم الجدول"
+✅ "محتاج منك اسم الجدول عشان أقدر أساعدك"
+
+❌ "حدث خطأ أثناء التنفيذ"
+✅ "أوبس! في مشكلة حصلت 😅 خليني أشرحلك..."
+
+## تحذيرات مهمة:
+⚠️ قبل أي DELETE أو DROP، اسأل المستخدم "متأكد؟"
+⚠️ لو هتعمل تغيير كبير، اشرح الـ impact الأول
+⚠️ دايماً اعمل SELECT الأول عشان تتأكد من البيانات
+
+انت جاهز تساعد في أي حاجة متعلقة بقاعدة البيانات! 🚀`;
 
 // Available tools for the AI
 const tools = [
@@ -49,7 +75,7 @@ const tools = [
     type: "function",
     function: {
       name: "list_tables",
-      description: "عرض جميع الجداول المتاحة في قاعدة البيانات مع معلومات عنها",
+      description: "عرض كل الجداول الموجودة في قاعدة البيانات",
       parameters: {
         type: "object",
         properties: {},
@@ -61,13 +87,13 @@ const tools = [
     type: "function",
     function: {
       name: "describe_table",
-      description: "عرض هيكل جدول معين - الأعمدة وأنواعها والقيود",
+      description: "عرض تفاصيل جدول معين - الأعمدة وأنواعها",
       parameters: {
         type: "object",
         properties: {
           table_name: {
             type: "string",
-            description: "اسم الجدول المراد وصفه",
+            description: "اسم الجدول",
           },
         },
         required: ["table_name"],
@@ -77,18 +103,126 @@ const tools = [
   {
     type: "function",
     function: {
+      name: "select_data",
+      description: "جلب بيانات من جدول معين مع إمكانية الفلترة",
+      parameters: {
+        type: "object",
+        properties: {
+          table_name: {
+            type: "string",
+            description: "اسم الجدول",
+          },
+          columns: {
+            type: "string",
+            description: "الأعمدة المطلوبة (اختياري، افتراضياً كل الأعمدة)",
+          },
+          filter_column: {
+            type: "string",
+            description: "العمود للفلترة (اختياري)",
+          },
+          filter_value: {
+            type: "string",
+            description: "القيمة للفلترة (اختياري)",
+          },
+          limit: {
+            type: "number",
+            description: "عدد الصفوف (افتراضياً 50)",
+          },
+        },
+        required: ["table_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "insert_data",
+      description: "إضافة صف جديد لجدول",
+      parameters: {
+        type: "object",
+        properties: {
+          table_name: {
+            type: "string",
+            description: "اسم الجدول",
+          },
+          data: {
+            type: "object",
+            description: "البيانات المراد إضافتها ككائن JSON",
+          },
+        },
+        required: ["table_name", "data"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_data",
+      description: "تعديل بيانات موجودة في جدول",
+      parameters: {
+        type: "object",
+        properties: {
+          table_name: {
+            type: "string",
+            description: "اسم الجدول",
+          },
+          filter_column: {
+            type: "string",
+            description: "العمود للتحديد (مثل id)",
+          },
+          filter_value: {
+            type: "string",
+            description: "قيمة التحديد",
+          },
+          data: {
+            type: "object",
+            description: "البيانات الجديدة",
+          },
+        },
+        required: ["table_name", "filter_column", "filter_value", "data"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_data",
+      description: "حذف صفوف من جدول",
+      parameters: {
+        type: "object",
+        properties: {
+          table_name: {
+            type: "string",
+            description: "اسم الجدول",
+          },
+          filter_column: {
+            type: "string",
+            description: "العمود للتحديد",
+          },
+          filter_value: {
+            type: "string",
+            description: "قيمة التحديد",
+          },
+        },
+        required: ["table_name", "filter_column", "filter_value"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "execute_sql",
-      description: "تنفيذ أي استعلام SQL مباشرة - يشمل SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, ALTER TABLE, DROP TABLE, CREATE INDEX, وأي عملية SQL أخرى",
+      description: "تنفيذ أي كود SQL مباشرة - للعمليات المتقدمة مثل CREATE TABLE, ALTER, DROP, أو استعلامات معقدة",
       parameters: {
         type: "object",
         properties: {
           sql: {
             type: "string",
-            description: "استعلام SQL المراد تنفيذه",
+            description: "كود SQL المراد تنفيذه",
           },
           description: {
             type: "string",
-            description: "وصف قصير لما يفعله هذا الاستعلام",
+            description: "وصف قصير للعملية",
           },
         },
         required: ["sql"],
@@ -109,7 +243,7 @@ async function executeToolCall(
   try {
     switch (toolName) {
       case "list_tables": {
-        console.log("Listing tables using OpenAPI schema...");
+        console.log("📋 جاري عرض الجداول...");
         
         // Use OpenAPI endpoint to get available tables
         const response = await fetch(`${supabaseUrl}/rest/v1/`, {
@@ -126,7 +260,6 @@ async function executeToolCall(
           const tables: string[] = [];
           
           for (const path of Object.keys(paths)) {
-            // Extract table names from paths like "/table_name"
             if (path.startsWith('/') && !path.includes('{')) {
               const tableName = path.slice(1);
               if (tableName && tableName !== 'rpc') {
@@ -140,116 +273,175 @@ async function executeToolCall(
               success: true,
               tables: tables,
               count: tables.length,
-              message: `تم العثور على ${tables.length} جدول`
             });
           }
         }
         
-        // Fallback: Try to check for common table patterns
-        console.log("OpenAPI failed, trying common tables check...");
-        
-        const commonTables = ['users', 'profiles', 'posts', 'comments', 'products', 'orders', 'categories'];
-        const existingTables: string[] = [];
-        
-        for (const table of commonTables) {
-          const { error } = await userSupabase.from(table).select('*').limit(0);
-          if (!error) {
-            existingTables.push(table);
-          }
-        }
-        
-        if (existingTables.length > 0) {
-          return JSON.stringify({
-            success: true,
-            tables: existingTables,
-            note: "هذه الجداول التي تم اكتشافها. قد توجد جداول أخرى."
-          });
-        }
-        
         return JSON.stringify({
-          success: false,
-          message: "لم يتم العثور على جداول في قاعدة البيانات. قد تكون فارغة أو الصلاحيات محدودة.",
-          hint: "يمكنك إنشاء جدول جديد باستخدام execute_sql"
+          success: true,
+          tables: [],
+          message: "قاعدة البيانات فاضية، مفيش جداول لسه"
         });
       }
 
       case "describe_table": {
         const tableName = args.table_name as string;
+        console.log(`📊 جاري وصف الجدول: ${tableName}`);
         
-        // Get column information
-        const { data: columns, error } = await userSupabase
+        // Get sample data to understand structure
+        const { data: sample, error } = await userSupabase
           .from(tableName)
           .select("*")
-          .limit(0);
+          .limit(5);
         
         if (error) {
-          // Try to get structure via SQL
-          const structureQuery = `
-            SELECT 
-              column_name,
-              data_type,
-              is_nullable,
-              column_default,
-              character_maximum_length
-            FROM information_schema.columns 
-            WHERE table_schema = 'public' AND table_name = '${tableName}'
-            ORDER BY ordinal_position
-          `;
-          
           return JSON.stringify({
+            success: false,
             error: error.message,
-            hint: `جرب execute_sql مع الاستعلام: ${structureQuery}`,
           });
         }
         
-        // Get one sample row to understand structure
-        const { data: sample } = await userSupabase
-          .from(tableName)
-          .select("*")
-          .limit(1);
+        // Analyze columns from sample
+        const columns: Record<string, string> = {};
+        if (sample && sample.length > 0) {
+          for (const [key, value] of Object.entries(sample[0])) {
+            columns[key] = typeof value;
+          }
+        }
         
         return JSON.stringify({
+          success: true,
           table_name: tableName,
-          sample_row: sample?.[0] || null,
-          message: sample ? "تم جلب عينة من البيانات" : "الجدول فارغ",
+          columns,
+          sample_data: sample,
+          row_count: sample?.length || 0,
+        });
+      }
+
+      case "select_data": {
+        const tableName = args.table_name as string;
+        const columns = (args.columns as string) || "*";
+        const filterColumn = args.filter_column as string;
+        const filterValue = args.filter_value as string;
+        const limit = (args.limit as number) || 50;
+        
+        console.log(`🔍 جاري جلب البيانات من: ${tableName}`);
+        
+        let query = userSupabase.from(tableName).select(columns).limit(limit);
+        
+        if (filterColumn && filterValue) {
+          query = query.eq(filterColumn, filterValue);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          return JSON.stringify({
+            success: false,
+            error: error.message,
+          });
+        }
+        
+        return JSON.stringify({
+          success: true,
+          data,
+          count: data?.length || 0,
+        });
+      }
+
+      case "insert_data": {
+        const tableName = args.table_name as string;
+        const data = args.data as Record<string, unknown>;
+        
+        console.log(`➕ جاري إضافة بيانات للجدول: ${tableName}`);
+        
+        const { data: inserted, error } = await userSupabase
+          .from(tableName)
+          .insert(data)
+          .select();
+        
+        if (error) {
+          return JSON.stringify({
+            success: false,
+            error: error.message,
+          });
+        }
+        
+        return JSON.stringify({
+          success: true,
+          inserted,
+          message: "تم إضافة البيانات بنجاح"
+        });
+      }
+
+      case "update_data": {
+        const tableName = args.table_name as string;
+        const filterColumn = args.filter_column as string;
+        const filterValue = args.filter_value as string;
+        const data = args.data as Record<string, unknown>;
+        
+        console.log(`✏️ جاري تعديل البيانات في: ${tableName}`);
+        
+        const { data: updated, error } = await userSupabase
+          .from(tableName)
+          .update(data)
+          .eq(filterColumn, filterValue)
+          .select();
+        
+        if (error) {
+          return JSON.stringify({
+            success: false,
+            error: error.message,
+          });
+        }
+        
+        return JSON.stringify({
+          success: true,
+          updated,
+          count: updated?.length || 0,
+          message: "تم التعديل بنجاح"
+        });
+      }
+
+      case "delete_data": {
+        const tableName = args.table_name as string;
+        const filterColumn = args.filter_column as string;
+        const filterValue = args.filter_value as string;
+        
+        console.log(`🗑️ جاري حذف البيانات من: ${tableName}`);
+        
+        const { data: deleted, error } = await userSupabase
+          .from(tableName)
+          .delete()
+          .eq(filterColumn, filterValue)
+          .select();
+        
+        if (error) {
+          return JSON.stringify({
+            success: false,
+            error: error.message,
+          });
+        }
+        
+        return JSON.stringify({
+          success: true,
+          deleted,
+          count: deleted?.length || 0,
+          message: "تم الحذف بنجاح"
         });
       }
 
       case "execute_sql": {
         const sql = args.sql as string;
-        const description = args.description as string || "تنفيذ استعلام SQL";
+        const description = args.description as string || "تنفيذ SQL";
         
-        console.log(`Executing SQL: ${sql}`);
-        console.log(`Description: ${description}`);
+        console.log(`⚡ جاري تنفيذ SQL: ${description}`);
+        console.log(`SQL: ${sql}`);
         
-        // Use the REST API to execute SQL via rpc
-        // First, try to use the rpc endpoint
-        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
-            'Prefer': 'return=representation',
-          },
-          body: JSON.stringify({ query: sql }),
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          return JSON.stringify({
-            success: true,
-            description,
-            result,
-          });
-        }
-        
-        // If exec_sql doesn't exist, try query directly via PostgREST for simple queries
         const sqlLower = sql.toLowerCase().trim();
         
         // Handle SELECT queries
         if (sqlLower.startsWith("select")) {
-          // Parse simple SELECT queries
           const fromMatch = sql.match(/from\s+["']?(\w+)["']?/i);
           if (fromMatch) {
             const tableName = fromMatch[1];
@@ -262,31 +454,27 @@ async function executeToolCall(
               return JSON.stringify({
                 success: false,
                 error: error.message,
-                hint: "تأكد من وجود الجدول وصلاحيات الوصول",
               });
             }
             
             return JSON.stringify({
               success: true,
-              description,
               data,
               count: data?.length || 0,
             });
           }
         }
         
-        // Handle INSERT queries
+        // Handle INSERT queries  
         if (sqlLower.startsWith("insert")) {
           const tableMatch = sql.match(/insert\s+into\s+["']?(\w+)["']?/i);
           if (tableMatch) {
             const tableName = tableMatch[1];
-            
-            // Parse values - simplified parsing
             const valuesMatch = sql.match(/values\s*\(([^)]+)\)/i);
             const columnsMatch = sql.match(/\(([^)]+)\)\s*values/i);
             
             if (valuesMatch && columnsMatch) {
-              const columns = columnsMatch[1].split(',').map(c => c.trim().replace(/["']/g, ''));
+              const columns = columnsMatch[1].split(',').map(c => c.trim().replace(/["'`]/g, ''));
               const values = valuesMatch[1].split(',').map(v => {
                 const trimmed = v.trim();
                 if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
@@ -310,15 +498,11 @@ async function executeToolCall(
                 .select();
               
               if (error) {
-                return JSON.stringify({
-                  success: false,
-                  error: error.message,
-                });
+                return JSON.stringify({ success: false, error: error.message });
               }
               
               return JSON.stringify({
                 success: true,
-                description,
                 inserted: data,
               });
             }
@@ -328,15 +512,28 @@ async function executeToolCall(
         // Handle UPDATE queries
         if (sqlLower.startsWith("update")) {
           const tableMatch = sql.match(/update\s+["']?(\w+)["']?/i);
-          if (tableMatch) {
+          const setMatch = sql.match(/set\s+(\w+)\s*=\s*['"]?([^'"]+)['"]?/i);
+          const whereMatch = sql.match(/where\s+(\w+)\s*=\s*['"]?([^'";\s]+)['"]?/i);
+          
+          if (tableMatch && setMatch && whereMatch) {
             const tableName = tableMatch[1];
+            const updateData: Record<string, unknown> = {};
+            updateData[setMatch[1]] = setMatch[2];
             
-            // This is a simplified approach - for complex updates, we need the exec_sql function
+            const { data, error } = await userSupabase
+              .from(tableName)
+              .update(updateData)
+              .eq(whereMatch[1], whereMatch[2])
+              .select();
+            
+            if (error) {
+              return JSON.stringify({ success: false, error: error.message });
+            }
+            
             return JSON.stringify({
-              success: false,
-              error: "للتعديلات المعقدة، تحتاج لإنشاء دالة exec_sql في قاعدة البيانات",
-              suggestion: `يمكنني مساعدتك في إنشاء هذه الدالة. هل تريد ذلك؟`,
-              manual_sql: sql,
+              success: true,
+              updated: data,
+              count: data?.length || 0,
             });
           }
         }
@@ -348,39 +545,54 @@ async function executeToolCall(
           
           if (tableMatch && whereMatch) {
             const tableName = tableMatch[1];
-            const column = whereMatch[1];
-            const value = whereMatch[2];
             
             const { data, error } = await userSupabase
               .from(tableName)
               .delete()
-              .eq(column, value)
+              .eq(whereMatch[1], whereMatch[2])
               .select();
             
             if (error) {
-              return JSON.stringify({
-                success: false,
-                error: error.message,
-              });
+              return JSON.stringify({ success: false, error: error.message });
             }
             
             return JSON.stringify({
               success: true,
-              description,
               deleted: data,
               count: data?.length || 0,
             });
           }
         }
         
-        // For DDL operations (CREATE, ALTER, DROP), we need the exec_sql function
+        // For DDL operations (CREATE, ALTER, DROP) - try RPC first
         if (sqlLower.startsWith("create") || sqlLower.startsWith("alter") || sqlLower.startsWith("drop")) {
+          // Try exec_sql RPC function
+          const response = await fetch(`${supabaseUrl}/rest/v1/rpc/exec_sql`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({ query: sql }),
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            return JSON.stringify({
+              success: true,
+              result,
+              message: "تم تنفيذ العملية بنجاح"
+            });
+          }
+          
+          // RPC doesn't exist, return instructions
           return JSON.stringify({
             success: false,
             requires_setup: true,
-            message: "لتنفيذ عمليات DDL (إنشاء/تعديل/حذف الجداول)، تحتاج لإنشاء دالة exec_sql في قاعدة البيانات.",
+            message: "لتنفيذ عمليات DDL، محتاج تنشئ دالة exec_sql في قاعدة البيانات",
             setup_sql: `
--- قم بتنفيذ هذا الكود في SQL Editor في Supabase Dashboard:
+-- نفذ الكود ده في SQL Editor في Supabase:
 CREATE OR REPLACE FUNCTION exec_sql(query text)
 RETURNS json
 LANGUAGE plpgsql
@@ -390,13 +602,12 @@ DECLARE
   result json;
 BEGIN
   EXECUTE query;
-  RETURN json_build_object('success', true, 'message', 'تم تنفيذ الاستعلام بنجاح');
+  RETURN json_build_object('success', true);
 EXCEPTION WHEN OTHERS THEN
   RETURN json_build_object('success', false, 'error', SQLERRM);
 END;
 $$;
 
--- منح الصلاحيات
 GRANT EXECUTE ON FUNCTION exec_sql(text) TO anon;
 GRANT EXECUTE ON FUNCTION exec_sql(text) TO authenticated;
             `,
@@ -406,26 +617,25 @@ GRANT EXECUTE ON FUNCTION exec_sql(text) TO authenticated;
         
         return JSON.stringify({
           success: false,
-          error: "لم أتمكن من تحليل الاستعلام",
+          error: "مش قادر أحلل الاستعلام ده",
           sql,
         });
       }
 
       default:
-        return JSON.stringify({ error: `أداة غير معروفة: ${toolName}` });
+        return JSON.stringify({ error: `أداة مش موجودة: ${toolName}` });
     }
   } catch (error: any) {
-    console.error(`Tool execution error (${toolName}):`, error);
+    console.error(`❌ Tool error (${toolName}):`, error);
     return JSON.stringify({
+      success: false,
       error: error.message,
       tool: toolName,
-      args,
     });
   }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -433,23 +643,21 @@ serve(async (req) => {
   try {
     const { messages, conversationHistory, supabaseUrl, supabaseKey } = await req.json();
 
-    // Validate user's Supabase credentials
     if (!supabaseUrl || !supabaseKey) {
       return new Response(
         JSON.stringify({
           error: "missing_credentials",
-          response: "يرجى توفير رابط Supabase و API Key",
+          response: "محتاج رابط Supabase والـ API Key عشان أقدر أساعدك 🔑",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate URL format
     if (!supabaseUrl.includes("supabase.co") && !supabaseUrl.includes("supabase.in")) {
       return new Response(
         JSON.stringify({
           error: "invalid_url",
-          response: "رابط Supabase غير صحيح. يجب أن يكون بالشكل: https://xxxxx.supabase.co",
+          response: "الرابط ده مش صحيح! لازم يكون زي كده: https://xxxxx.supabase.co",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -458,31 +666,27 @@ serve(async (req) => {
     // Test connection
     try {
       const testClient = createClient(supabaseUrl, supabaseKey);
-      // Simple health check
-      await testClient.from('_test_connection_').select('*').limit(1).maybeSingle();
+      await testClient.from('_test_').select('*').limit(1).maybeSingle();
     } catch (connError: any) {
       if (connError.message?.includes("Invalid API key")) {
         return new Response(
           JSON.stringify({
             error: "invalid_key",
-            response: "مفتاح API غير صحيح. تأكد من استخدام anon key أو service_role key",
+            response: "الـ API Key ده مش صحيح 🔒 تأكد إنك استخدمت anon key أو service_role key",
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      // Other errors might be okay (table doesn't exist, etc.)
     }
 
-    // Prepare messages for OpenAI
     const allMessages = [
       { role: "system", content: SYSTEM_PROMPT },
       ...(conversationHistory || []),
       ...messages,
     ];
 
-    console.log("Calling Lovable AI Gateway...");
+    console.log("🤖 جاري الاتصال بالـ AI...");
 
-    // Call Lovable AI Gateway with correct URL
     let response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -500,19 +704,19 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", errorText);
-      throw new Error(`AI Gateway error: ${response.status}`);
+      throw new Error(`مشكلة في الـ AI: ${response.status}`);
     }
 
     let data = await response.json();
     let assistantMessage = data.choices[0].message;
 
-    // Handle tool calls in a loop
+    // Handle tool calls loop
     let iterations = 0;
-    const maxIterations = 10;
+    const maxIterations = 15; // زودنا العدد عشان العمليات المعقدة
 
     while (assistantMessage.tool_calls && iterations < maxIterations) {
       iterations++;
-      console.log(`Tool call iteration ${iterations}`);
+      console.log(`🔧 Tool call #${iterations}`);
 
       const toolResults = [];
 
@@ -520,7 +724,7 @@ serve(async (req) => {
         const toolName = toolCall.function.name;
         const toolArgs = JSON.parse(toolCall.function.arguments || "{}");
 
-        console.log(`Executing tool: ${toolName}`, toolArgs);
+        console.log(`⚡ Executing: ${toolName}`, toolArgs);
 
         const result = await executeToolCall(toolName, toolArgs, supabaseUrl, supabaseKey);
 
@@ -531,7 +735,6 @@ serve(async (req) => {
         });
       }
 
-      // Continue conversation with tool results
       allMessages.push(assistantMessage);
       allMessages.push(...toolResults);
 
@@ -551,26 +754,26 @@ serve(async (req) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("AI Gateway error in loop:", errorText);
-        throw new Error(`AI Gateway error: ${response.status}`);
+        console.error("AI error in loop:", errorText);
+        throw new Error(`مشكلة في الـ AI: ${response.status}`);
       }
 
       data = await response.json();
       assistantMessage = data.choices[0].message;
     }
 
-    const finalResponse = assistantMessage.content || "تم تنفيذ العملية بنجاح.";
+    const finalResponse = assistantMessage.content || "تمام! خلصت العملية 👍";
 
     return new Response(
       JSON.stringify({ response: finalResponse }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
-    console.error("Error in ai-database function:", error);
+    console.error("❌ Error:", error);
     return new Response(
       JSON.stringify({
         error: "server_error",
-        response: `حدث خطأ: ${error.message}`,
+        response: `أوبس! حصلت مشكلة 😅: ${error.message}`,
       }),
       {
         status: 500,
